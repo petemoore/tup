@@ -6,6 +6,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+      name: Check out code from github
     - run: sudo apt-get install ccache libfuse3-dev build-essential flex bison gperf libncurses5-dev libncursesw5-dev gawk libmpfr-dev libgpm-dev zlib1g-dev yasm graphviz
     - run: pip3 install sh
     - run: ./bootstrap.sh
@@ -18,12 +19,18 @@ jobs:
         shell: msys2 {0}
     steps:
     - uses: msys2/setup-msys2@v2
+      name: Set up MSYS2
       with:
         msystem: MINGW64
         update: true
         install: >-
           base-devel
+    - uses: egor-tensin/setup-mingw@v2
+      name: Set up MinGW
+      with:
+        platform: x64
     - uses: actions/checkout@v2
+      name: Check out code from github
     - run: ./build-win32.sh
     - run: cd test && ./test.sh --keep-going
 
@@ -31,6 +38,7 @@ jobs:
     runs-on: macos-latest
     steps:
     - uses: actions/checkout@v2
+      name: Check out code from github
     - run: brew install macfuse ccache
     - run: pip3 install sh
     - run: ./bootstrap.sh
