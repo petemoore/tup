@@ -1,6 +1,7 @@
 name: Build and Test
 on: [push, pull_request]
 jobs:
+
   ubuntu:
     runs-on: ubuntu-latest
     steps:
@@ -10,24 +11,21 @@ jobs:
     - run: ./bootstrap.sh
     - run: cd test && ./test.sh --keep-going
 
-# Currently bootstrap.sh is not supported on Windows, since build.sh is not supported on Windows.
-# However, when it is, this commented-out github action below can be used.
-
-# windows:
-#   runs-on: windows-latest
-#   defaults:
-#     run:
-#       shell: msys2 {0}
-#   steps:
-#   - uses: msys2/setup-msys2@v2
-#     with:
-#       msystem: MINGW64
-#       update: true
-#       install: >-
-#         base-devel
-#   - uses: actions/checkout@v2
-#   - run: ./bootstrap.sh
-#   - run: cd test && ./test.sh --keep-going
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+    - uses: msys2/setup-msys2@v2
+      with:
+        msystem: MINGW64
+        update: true
+        install: >-
+          base-devel
+    - uses: actions/checkout@v2
+    - run: ./build-win32.sh
+    - run: cd test && ./test.sh --keep-going
 
   macos:
     runs-on: macos-latest
