@@ -40,6 +40,7 @@
 #include <errno.h>
 #include <libgen.h>
 #include <sys/types.h>
+#include <limits.h>
 #include <sys/resource.h>
 
 static struct thread_root troot = THREAD_ROOT_INITIALIZER;
@@ -63,7 +64,10 @@ void tup_fuse_fs_init(void)
 				break;
 		}
 		if(getrlimit(RLIMIT_NOFILE, &rlim) == 0) {
-			max_open_files = rlim.rlim_cur / 2;
+			rlim_t half = rlim.rlim_cur / 2;
+			if(half > INT_MAX)
+				half = INT_MAX;
+			max_open_files = (int)half;
 		}
 	}
 }
