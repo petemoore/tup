@@ -143,7 +143,7 @@ struct rule {
 	int foreach;
 	struct bin *bin;
 	const char *command;
-	char *extra_command;
+	const char *extra_command;
 	int command_len;
 	struct name_list inputs;
 	struct name_list order_only_inputs;

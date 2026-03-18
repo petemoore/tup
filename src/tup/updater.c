@@ -2846,7 +2846,7 @@ static int expand_command(char **res,
 	tcmd = cmd;
 	while((percgroup = strstr(tcmd, "%<")) != NULL) {
 		int prelen = percgroup - tcmd;
-		char *endgroup;
+		const char *endgroup;
 
 		if(estring_append(&expanded_name, tcmd, prelen) < 0)
 			return -1;
