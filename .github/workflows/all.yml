@@ -22,7 +22,10 @@ jobs:
         # API-compatible with macFUSE, no kernel extension needed.
         # https://github.com/macos-fuse-t/fuse-t
         brew tap macos-fuse-t/homebrew-cask
-        brew install fuse-t
+        # Use fully qualified tap path to ensure brew reads the local tap
+        # (not a stale Homebrew JSON API cache). We need >= 1.0.54 which
+        # includes the recv-EOF unmount fix (macos-fuse-t/libfuse#11).
+        brew install --cask macos-fuse-t/cask/fuse-t
         brew install pkg-config pcre2 ccache
         pip3 install --break-system-packages sh
     - name: Create macFUSE-compatible symlinks
