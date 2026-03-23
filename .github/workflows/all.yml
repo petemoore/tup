@@ -25,13 +25,13 @@ jobs:
         brew install fuse-t
         brew install pkg-config pcre2 ccache
         pip3 install --break-system-packages sh
-    - name: Verify FUSE-T install
+    - name: Create macFUSE-compatible symlinks
       run: |
-        echo "=== Checking for libfuse-t ==="
-        find /usr/local/lib /Library -name "libfuse*" -o -name "fuse.pc" -o -name "fuse-t.pc" 2>/dev/null || true
-        find /usr/local/include /Library/Frameworks -name "fuse.h" 2>/dev/null || true
-        ls -la /usr/local/lib/pkgconfig/fuse*.pc 2>/dev/null || true
-        pkg-config --cflags --libs fuse 2>/dev/null || echo "pkg-config fuse not found"
+        # FUSE-T installs headers in a framework and pkg-config as fuse-t.pc,
+        # but tup's build expects /usr/local/include/fuse/ and fuse.pc.
+        sudo mkdir -p /usr/local/include/fuse
+        sudo ln -sf /Library/Frameworks/fuse_t.framework/Headers/* /usr/local/include/fuse/
+        sudo ln -sf /usr/local/lib/pkgconfig/fuse-t.pc /usr/local/lib/pkgconfig/fuse.pc
     - name: Build (bootstrap)
       run: ./bootstrap.sh
     - name: Run tests
