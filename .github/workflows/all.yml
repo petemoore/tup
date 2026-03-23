@@ -35,6 +35,11 @@ jobs:
         sudo mkdir -p /usr/local/include/fuse
         sudo ln -sf /Library/Frameworks/fuse_t.framework/Headers/* /usr/local/include/fuse/
 
+        # FUSE-T's dylib uses @rpath as its install name, but tup's build
+        # doesn't set an rpath. Fix the dylib's install name to its absolute
+        # path so the linker embeds that directly.
+        sudo install_name_tool -id /usr/local/lib/libfuse-t.dylib /usr/local/lib/libfuse-t.dylib
+
         # Create fuse.pc that wraps fuse-t.pc and adds the -D_FILE_OFFSET_BITS=64
         # flag required by the FUSE headers.
         sudo tee /usr/local/lib/pkgconfig/fuse.pc > /dev/null << 'PKGCONFIG'
