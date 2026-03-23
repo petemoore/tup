@@ -31,7 +31,21 @@ jobs:
         # but tup's build expects /usr/local/include/fuse/ and fuse.pc.
         sudo mkdir -p /usr/local/include/fuse
         sudo ln -sf /Library/Frameworks/fuse_t.framework/Headers/* /usr/local/include/fuse/
-        sudo ln -sf /usr/local/lib/pkgconfig/fuse-t.pc /usr/local/lib/pkgconfig/fuse.pc
+
+        # Create fuse.pc that wraps fuse-t.pc and adds the -D_FILE_OFFSET_BITS=64
+        # flag required by the FUSE headers.
+        sudo tee /usr/local/lib/pkgconfig/fuse.pc > /dev/null << 'PKGCONFIG'
+        prefix=/usr/local
+        exec_prefix=${prefix}
+        libdir=${exec_prefix}/lib
+        includedir=${prefix}/include
+        Name: fuse
+        Description: FUSE-T (macFUSE-compatible)
+        Version: 2.9.9
+        Requires.private: fuse-t
+        Libs: -L${libdir} -lfuse-t -pthread
+        Cflags: -I${includedir}/fuse -D_FILE_OFFSET_BITS=64
+        PKGCONFIG
     - name: Build (bootstrap)
       run: ./bootstrap.sh
     - name: Run tests
