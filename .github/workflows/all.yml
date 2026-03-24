@@ -101,6 +101,30 @@ jobs:
         grep -o "opcode: [A-Z_]* " /tmp/fuse-debug.log | sort | uniq -c | sort -rn | head -20
         echo "=== NFS mount options captured during tup execution ==="
         sort -u /tmp/mount-during-tup.log || echo "No mount info captured"
+        echo "=== go-nfsv4 binary info ==="
+        ls -la /usr/local/bin/go-nfsv4 2>/dev/null || echo "go-nfsv4 not found in /usr/local/bin"
+        ls -la "/Library/Application Support/fuse-t/bin/" 2>/dev/null || echo "fuse-t bin dir not found"
+        file /usr/local/bin/go-nfsv4 2>/dev/null
+        md5 /usr/local/bin/go-nfsv4 2>/dev/null
+        echo "=== FUSE debug: context around luabuiltin job ==="
+        # Find the tupjob that runs the lua xxd command and show surrounding FUSE ops
+        luajob=$(grep -o "tupjob-[0-9]*" /tmp/fuse-debug.log | sort -u | while read job; do
+          if grep -q "$job.*src/lua/lua" /tmp/fuse-debug.log; then echo "$job"; fi
+        done | head -1)
+        if [ -n "$luajob" ]; then
+          echo "Luabuiltin job: $luajob"
+          echo "--- All LOOKUP ops for this job on src/lua/ ---"
+          grep "LOOKUP /@$luajob.*src/lua/" /tmp/fuse-debug.log || echo "None"
+          echo "--- OPENDIR/READDIR for this job ---"
+          grep -E "OPENDIR|READDIR|RELEASEDIR" /tmp/fuse-debug.log | head -20
+        else
+          echo "Could not identify luabuiltin job"
+        fi
+        echo "=== NFS client config ==="
+        cat /etc/nfs.conf 2>/dev/null || echo "No nfs.conf"
+        nfsstat -m 2>/dev/null | head -20 || echo "No NFS mounts active"
+        echo "=== macOS version ==="
+        sw_vers
         echo "=== tup debug stdout ==="
         cat /tmp/tup-debug-stdout.log
     - name: Run tests
