@@ -123,8 +123,16 @@ jobs:
         echo "=== NFS client config ==="
         cat /etc/nfs.conf 2>/dev/null || echo "No nfs.conf"
         nfsstat -m 2>/dev/null | head -20 || echo "No NFS mounts active"
+        echo "=== NFS client sysctl ==="
+        sysctl -a 2>/dev/null | grep "vfs.generic.nfs.client" || echo "No NFS client sysctls"
         echo "=== macOS version ==="
         sw_vers
+        echo "=== Hardware info ==="
+        sysctl hw.model hw.machine hw.ncpu 2>/dev/null
+        echo "=== Spotlight/FSEvents status ==="
+        mdutil -s / 2>/dev/null || echo "mdutil not available"
+        echo "=== FUSE-T framework version ==="
+        defaults read /Library/Frameworks/fuse_t.framework/Versions/Current/Resources/Info.plist 2>/dev/null | head -20 || echo "Cannot read plist"
         echo "=== tup debug stdout ==="
         cat /tmp/tup-debug-stdout.log
     - name: Run tests
