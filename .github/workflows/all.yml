@@ -59,8 +59,50 @@ jobs:
         Libs: -L${libdir} -lfuse-t -pthread
         Cflags: -I${includedir}/fuse -D_FILE_OFFSET_BITS=64
         EOF
-    - name: Build (bootstrap)
-      run: ./bootstrap.sh
+    - name: Build (bootstrap with FUSE debug)
+      run: |
+        # Modify bootstrap.sh to capture mount info during tup execution.
+        # bootstrap.sh runs: tup init && tup upd
+        # We need --debug-fuse on the tup upd step.
+
+        # First, do a normal bootstrap to build tup
+        ./bootstrap.sh 2>&1 | tee /tmp/bootstrap.log
+
+        echo ""
+        echo "=== Normal bootstrap completed, now re-running with FUSE debug ==="
+        echo ""
+
+        # Clean generated files so tup rebuilds everything (including luabuiltin)
+        find . -name '*.o' -path '*/src/*' -delete
+        find . -name 'liblua.a' -delete
+        find . -name 'lua' -path '*/src/lua/lua' -delete
+        find . -name 'luabuiltin.h' -delete
+        find . -name 'tup_client.h' -delete
+        rm -f tup
+
+        # Capture NFS mount during tup execution using a background watcher
+        (while true; do mount | grep -i "nfs\|fuse" >> /tmp/mount-during-tup.log 2>/dev/null; sleep 0.5; done) &
+        MOUNT_PID=$!
+
+        # Run tup with --debug-fuse
+        ./build/tup --debug-fuse 2>/tmp/fuse-debug.log | tee /tmp/tup-debug-stdout.log || true
+
+        kill $MOUNT_PID 2>/dev/null || true
+
+        echo "=== FUSE debug: .gitignore references ==="
+        grep -n "gitignore" /tmp/fuse-debug.log || echo "No .gitignore references found"
+        echo "=== FUSE debug: READDIR/OPENDIR operations ==="
+        grep -n "READDIR\|OPENDIR\|RELEASEDIR" /tmp/fuse-debug.log || echo "No READDIR operations found"
+        echo "=== FUSE debug: LOOKUP on src/lua/ entries (first 50) ==="
+        grep -n "LOOKUP.*src/lua/" /tmp/fuse-debug.log | head -50 || echo "No LOOKUP on src/lua/ found"
+        echo "=== FUSE debug: PID values ==="
+        grep -o "pid: [0-9]*" /tmp/fuse-debug.log | sort | uniq -c | sort -rn | head -5
+        echo "=== FUSE debug: operation type counts ==="
+        grep -o "opcode: [A-Z_]* " /tmp/fuse-debug.log | sort | uniq -c | sort -rn | head -20
+        echo "=== NFS mount options captured during tup execution ==="
+        sort -u /tmp/mount-during-tup.log || echo "No mount info captured"
+        echo "=== tup debug stdout ==="
+        cat /tmp/tup-debug-stdout.log
     - name: Run tests
       run: |
         cd test
